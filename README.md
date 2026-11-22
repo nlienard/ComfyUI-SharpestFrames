@@ -9,7 +9,7 @@ blurred by camera motion or a focus pull. This node searches `± window` frames 
 ## Nodes
 
 - **Sharpest Frames (blur detector)** — `images` (IMAGE batch), `frames` (`"1,30,54,90,100,112,123"`, 1-based), `window` (default 6),
-  `center_crop` (default 0.3) → `images` (one sharpest frame per target, same order) + `chosen_frames` (STRING).
+  `center_crop` (default 0.3), optional `mode` (`around targets` / `spread over video` = N equal segments, max variety) and `min_gap` (default 4, no two tiles from the same moment) → `images` (one sharpest frame per target, same order) + `chosen_frames` (STRING).
 - **Image From Batch (index)** — one image of a batch by 0-based index, handy to split the picked frames into sheet tiles.
 
 No dependencies beyond ComfyUI (PyTorch). Install: clone into `ComfyUI/custom_nodes/` and restart ComfyUI.

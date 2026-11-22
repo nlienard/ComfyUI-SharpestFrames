@@ -33,6 +33,13 @@ class SharpestFrames:
                                    "tooltip": "Search +/- this many frames around each target."}),
                 "center_crop": ("FLOAT", {"default": 0.3, "min": 0.0, "max": 0.9, "step": 0.05,
                                           "tooltip": "Fraction of the frame border ignored when measuring sharpness (keeps the subject, drops the flat background)."}),
+            },
+            "optional": {
+                "mode": (["around targets", "spread over video"], {"default": "around targets",
+                         "tooltip": "around targets: best frame within +/- window of each target. spread over video: ignore the targets, cut the "
+                                    "video into N equal segments (N = number of targets) and keep the sharpest frame of each = maximum variety."}),
+                "min_gap": ("INT", {"default": 4, "min": 0, "max": 200,
+                                    "tooltip": "Minimum distance (frames) between two chosen frames, so two tiles never show the same moment."}),
             }
         }
 
@@ -43,15 +50,24 @@ class SharpestFrames:
     CATEGORY = "image/video"
     DESCRIPTION = "Picks, around each target frame number, the sharpest frame of the video (variance of the Laplacian)."
 
-    def pick(self, images, frames, window, center_crop):
+    def pick(self, images, frames, window, center_crop, mode="around targets", min_gap=4):
         n = images.shape[0]
         targets = [int(x) for x in str(frames).replace(";", ",").split(",") if x.strip()]
+        k = max(1, len(targets))
+        if mode == "spread over video":
+            bounds = [(round(i * n / k), round((i + 1) * n / k)) for i in range(k)]
+        else:
+            bounds = []
+            for t in targets:
+                t = min(max(t - 1, 0), n - 1)
+                bounds.append((max(0, t - window), min(n, t + window + 1)))
         chosen = []
-        for t in targets:
-            t = min(max(t - 1, 0), n - 1)
-            lo, hi = max(0, t - window), min(n, t + window + 1)
+        for lo, hi in bounds:
+            hi = max(hi, lo + 1)
             scores = _sharpness(images[lo:hi].float(), center_crop)
-            chosen.append(lo + int(torch.argmax(scores)))
+            order = torch.argsort(scores, descending=True).tolist()
+            pick = next((lo + j for j in order if all(abs(lo + j - c) >= min_gap for c in chosen)), lo + order[0])
+            chosen.append(pick)
         out = images[chosen]
         return (out, ",".join(str(c + 1) for c in chosen))
 

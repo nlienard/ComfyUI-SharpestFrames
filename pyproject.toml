@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-sharpestframes"
 description = "Pick the sharpest frames of a video around target frame numbers (blur detector for character sheets from orbit videos)."
-version = "1.0.0"
+version = "1.1.0"
 license = { file = "LICENSE" }
 
 [tool.comfy]
